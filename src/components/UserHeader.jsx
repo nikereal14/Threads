@@ -42,7 +42,14 @@ const UserHeader = () => {
 					</Flex>
 				</Box>
 				<Box>
-					<Avatar name='Dmitry Tarasov' src='/zuck-avatar.png' size={'xl'} />
+					<Avatar
+						name='Dmitry Tarasov'
+						src='/zuck-avatar.png'
+						size={{
+							base: 'md',
+							md: 'xl',
+						}}
+					/>
 				</Box>
 			</Flex>
 
