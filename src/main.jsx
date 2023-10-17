@@ -1,5 +1,5 @@
-import { ChakraProvider } from '@chakra-ui/provider';
-import { ColorModeScript } from '@chakra-ui/react';
+import { ColorModeScript } from '@chakra-ui/color-mode';
+import { ChakraProvider } from '@chakra-ui/react';
 import { mode } from '@chakra-ui/theme-tools';
 import { extendTheme } from '@chakra-ui/theme-utils';
 import React from 'react';
