@@ -46,7 +46,7 @@ const UserHeader = () => {
 				</Box>
 			</Flex>
 
-			<Text>React Javascript Programmer.</Text>
+			<Text>React Javascript Programmer</Text>
 			<Flex w={'full'} justifyContent={'space-between'}>
 				<Flex gap={2} alignItems={'center'}>
 					<Text color={'gray.light'}>3.2K followers</Text>
