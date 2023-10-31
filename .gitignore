@@ -22,11 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-#Public
-public/post1.png
-public/post2.png
-public/post3.png
-public/zuck-avatar.png
-
-.env

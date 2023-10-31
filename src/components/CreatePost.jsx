@@ -20,7 +20,9 @@ import {
 } from '@chakra-ui/react';
 import { useRef, useState } from 'react';
 import { BsFillImageFill } from 'react-icons/bs';
-import { useRecoilValue } from 'recoil';
+import { useParams } from 'react-router-dom';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import postsAtom from '../atoms/postsAtom';
 import userAtom from '../atoms/userAtom';
 import usePreviewImg from '../hooks/usePreviewImg';
 import useShowToast from '../hooks/useShowToast';
@@ -32,10 +34,12 @@ const CreatePost = () => {
 	const [postText, setPostText] = useState('');
 	const { handleImageChange, imgUrl, setImgUrl } = usePreviewImg();
 	const imageRef = useRef(null);
-	const [remaingChar, setRemaingChar] = useState(MAX_CHAR);
+	const [remainingChar, setRemainingChar] = useState(MAX_CHAR);
 	const user = useRecoilValue(userAtom);
 	const showToast = useShowToast();
 	const [loading, setLoading] = useState(false);
+	const [posts, setPosts] = useRecoilState(postsAtom);
+	const { username } = useParams();
 
 	const handleTextChange = e => {
 		const inputText = e.target.value;
@@ -43,10 +47,10 @@ const CreatePost = () => {
 		if (inputText.length > MAX_CHAR) {
 			const truncatedText = inputText.slice(0, MAX_CHAR);
 			setPostText(truncatedText);
-			setRemaingChar(0);
+			setRemainingChar(0);
 		} else {
 			setPostText(inputText);
-			setRemaingChar(MAX_CHAR - inputText.length);
+			setRemainingChar(MAX_CHAR - inputText.length);
 		}
 	};
 
@@ -67,15 +71,18 @@ const CreatePost = () => {
 
 			const data = await res.json();
 			if (data.error) {
-				showToast('Error', data.error, 'error');
+				showToast('Ошибка,', data.error, 'error');
 				return;
 			}
-			showToast('Success', 'Post created successfully', 'success');
+			showToast('Успешно', 'Запись успешно создана.', 'success');
+			if (username === user.username) {
+				setPosts([data, ...posts]);
+			}
 			onClose();
 			setPostText('');
 			setImgUrl('');
 		} catch (error) {
-			showToast('Error', error, 'error');
+			showToast('Ошибка', error, 'error');
 		} finally {
 			setLoading(false);
 		}
@@ -86,24 +93,24 @@ const CreatePost = () => {
 			<Button
 				position={'fixed'}
 				bottom={10}
-				right={10}
-				leftIcon={<AddIcon />}
+				right={5}
 				bg={useColorModeValue('gray.300', 'gray.dark')}
 				onClick={onOpen}
+				size={{ base: 'sm', sm: 'md' }}
 			>
-				Post
+				<AddIcon />
 			</Button>
 
 			<Modal isOpen={isOpen} onClose={onClose}>
 				<ModalOverlay />
 
 				<ModalContent>
-					<ModalHeader>Create Post</ModalHeader>
+					<ModalHeader>Создать запись</ModalHeader>
 					<ModalCloseButton />
 					<ModalBody pb={6}>
 						<FormControl>
 							<Textarea
-								placeholder='Post content goes here..'
+								placeholder='Текст записи..'
 								onChange={handleTextChange}
 								value={postText}
 							/>
@@ -114,7 +121,7 @@ const CreatePost = () => {
 								m={'1'}
 								color={'gray.800'}
 							>
-								{remaingChar}/{MAX_CHAR}
+								{remainingChar}/{MAX_CHAR}
 							</Text>
 
 							<Input
@@ -154,7 +161,7 @@ const CreatePost = () => {
 							onClick={handleCreatePost}
 							isLoading={loading}
 						>
-							Post
+							Опубликовать
 						</Button>
 					</ModalFooter>
 				</ModalContent>

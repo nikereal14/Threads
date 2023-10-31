@@ -33,6 +33,7 @@ export default function SignupCard() {
 
 	const showToast = useShowToast();
 	const setUser = useSetRecoilState(userAtom);
+
 	const handleSignup = async () => {
 		try {
 			const res = await fetch('/api/users/signup', {
@@ -45,14 +46,14 @@ export default function SignupCard() {
 			const data = await res.json();
 
 			if (data.error) {
-				showToast('Error', data.error, 'error');
+				showToast('Ошибка', data.error, 'error');
 				return;
 			}
 
 			localStorage.setItem('user-threads', JSON.stringify(data));
 			setUser(data);
 		} catch (error) {
-			showToast('Error', error, 'error');
+			showToast('Ошибка', error, 'error');
 		}
 	};
 
@@ -61,7 +62,7 @@ export default function SignupCard() {
 			<Stack spacing={8} mx={'auto'} maxW={'lg'} py={12} px={6}>
 				<Stack align={'center'}>
 					<Heading fontSize={'4xl'} textAlign={'center'}>
-						Sign up
+						Регистрация
 					</Heading>
 				</Stack>
 				<Box
@@ -74,7 +75,7 @@ export default function SignupCard() {
 						<HStack>
 							<Box>
 								<FormControl isRequired>
-									<FormLabel> Full name</FormLabel>
+									<FormLabel>Полное имя</FormLabel>
 									<Input
 										type='text'
 										onChange={e =>
@@ -86,7 +87,7 @@ export default function SignupCard() {
 							</Box>
 							<Box>
 								<FormControl isRequired>
-									<FormLabel>Username</FormLabel>
+									<FormLabel>Логин</FormLabel>
 									<Input
 										type='text'
 										onChange={e =>
@@ -98,7 +99,7 @@ export default function SignupCard() {
 							</Box>
 						</HStack>
 						<FormControl isRequired>
-							<FormLabel>Email address</FormLabel>
+							<FormLabel>Email</FormLabel>
 							<Input
 								type='email'
 								onChange={e => setInputs({ ...inputs, email: e.target.value })}
@@ -106,7 +107,7 @@ export default function SignupCard() {
 							/>
 						</FormControl>
 						<FormControl isRequired>
-							<FormLabel>Password</FormLabel>
+							<FormLabel>Пароль</FormLabel>
 							<InputGroup>
 								<Input
 									type={showPassword ? 'text' : 'password'}
@@ -129,7 +130,7 @@ export default function SignupCard() {
 						</FormControl>
 						<Stack spacing={10} pt={2}>
 							<Button
-								loadingText='Submitting'
+								loadingText='Регистрация'
 								size='lg'
 								bg={useColorModeValue('gray.600', 'gray.700')}
 								color={'white'}
@@ -138,14 +139,14 @@ export default function SignupCard() {
 								}}
 								onClick={handleSignup}
 							>
-								Sign up
+								Регистрация
 							</Button>
 						</Stack>
 						<Stack pt={6}>
 							<Text align={'center'}>
-								Already a user?{' '}
+								Уже зарегистрированы?{' '}
 								<Link color={'blue.400'} onClick={() => setAuthScreen('login')}>
-									Login
+									Авторизация
 								</Link>
 							</Text>
 						</Stack>

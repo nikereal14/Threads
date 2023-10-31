@@ -10,24 +10,25 @@ const createPost = async (req, res) => {
 		if (!postedBy || !text) {
 			return res
 				.status(400)
-				.json({ error: 'Postedby and text fields are required' });
+				.json({ error: 'Текстовые поля обязательны для заполнения.' });
 		}
 
 		const user = await User.findById(postedBy);
 		if (!user) {
-			return res.status(404).json({ error: 'User not found' });
+			return res.status(404).json({ error: 'Пользователь не найден' });
 		}
 
 		if (user._id.toString() !== req.user._id.toString()) {
-			return res.status(401).json({ error: 'Unauthorized to create post' });
+			return res.status(401).json({ error: 'Вы не авторизованы.' });
 		}
 
 		const maxLength = 500;
 		if (text.length > maxLength) {
 			return res
 				.status(400)
-				.json({ error: `Text must be less than ${maxLength} characters` });
+				.json({ error: `Текст должен быть не больше ${maxLength} символов.` });
 		}
+
 		if (img) {
 			const uploadedResponse = await cloudinary.uploader.upload(img);
 			img = uploadedResponse.secure_url;
@@ -36,7 +37,7 @@ const createPost = async (req, res) => {
 		const newPost = new Post({ postedBy, text, img });
 		await newPost.save();
 
-		res.status(201).json({ message: 'Post created successfully', newPost });
+		res.status(201).json(newPost);
 	} catch (err) {
 		res.status(500).json({ error: err.message });
 		console.log(err);
@@ -48,13 +49,12 @@ const getPost = async (req, res) => {
 		const post = await Post.findById(req.params.id);
 
 		if (!post) {
-			return res.status(404).json({ error: 'Post not found' });
+			return res.status(404).json({ error: 'Запись не найдена.' });
 		}
 
-		res.status(200).json({ post });
+		res.status(200).json(post);
 	} catch (err) {
 		res.status(500).json({ error: err.message });
-		console.log(err);
 	}
 };
 
@@ -62,19 +62,23 @@ const deletePost = async (req, res) => {
 	try {
 		const post = await Post.findById(req.params.id);
 		if (!post) {
-			return res.status(404).json({ error: 'Post not found' });
+			return res.status(404).json({ error: 'Запись не найдена.' });
 		}
 
 		if (post.postedBy.toString() !== req.user._id.toString()) {
-			return res.status(401).json({ error: 'Unauthorized to delete post' });
+			return res.status(401).json({ error: 'Вы не авторизованы.' });
+		}
+
+		if (post.img) {
+			const imgId = post.img.split('/').pop().split('.')[0];
+			await cloudinary.uploader.destroy(imgId);
 		}
 
 		await Post.findByIdAndDelete(req.params.id);
 
-		res.status(200).json({ message: 'Post deleted successfully' });
+		res.status(200).json({ message: 'Запись успешно удалена.' });
 	} catch (err) {
 		res.status(500).json({ error: err.message });
-		console.log(err);
 	}
 };
 
@@ -86,21 +90,21 @@ const likeUnlikePost = async (req, res) => {
 		const post = await Post.findById(postId);
 
 		if (!post) {
-			return res.status(404).json({ error: 'Post not found' });
+			return res.status(404).json({ error: 'Запись не найдена.' });
 		}
 
 		const userLikedPost = post.likes.includes(userId);
+
 		if (userLikedPost) {
 			await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
-			res.status(200).json({ message: 'Post unliked successfully' });
+			res.status(200).json({ message: 'Вы убрали лайк с записи.' });
 		} else {
 			post.likes.push(userId);
 			await post.save();
-			res.status(200).json({ message: 'Post liked successfully' });
+			res.status(200).json({ message: 'Вы успешно оценили запись.' });
 		}
 	} catch (err) {
 		res.status(500).json({ error: err.message });
-		console.log(err);
 	}
 };
 
@@ -113,12 +117,14 @@ const replyToPost = async (req, res) => {
 		const username = req.user.username;
 
 		if (!text) {
-			return res.status(400).json({ error: 'Text field is required' });
+			return res
+				.status(400)
+				.json({ error: 'Текстовые поля обязательны для заполнения.' });
 		}
 
 		const post = await Post.findById(postId);
 		if (!post) {
-			return res.status(404).json({ error: 'Post not found' });
+			return res.status(404).json({ error: 'Запись не найдена.' });
 		}
 
 		const reply = { userId, text, userProfilePic, username };
@@ -126,10 +132,9 @@ const replyToPost = async (req, res) => {
 		post.replies.push(reply);
 		await post.save();
 
-		res.status(200).json({ message: 'Replpy added successfully', post });
+		res.status(200).json(reply);
 	} catch (err) {
 		res.status(500).json({ error: err.message });
-		console.log(err);
 	}
 };
 
@@ -138,7 +143,7 @@ const getFeedPosts = async (req, res) => {
 		const userId = req.user._id;
 		const user = await User.findById(userId);
 		if (!user) {
-			return res.status(404).json({ error: 'User not found' });
+			return res.status(404).json({ error: 'Пользователь не найден.' });
 		}
 
 		const following = user.following;
@@ -150,7 +155,24 @@ const getFeedPosts = async (req, res) => {
 		res.status(200).json(feedPosts);
 	} catch (err) {
 		res.status(500).json({ error: err.message });
-		console.log(err);
+	}
+};
+
+const getUserPosts = async (req, res) => {
+	const { username } = req.params;
+	try {
+		const user = await User.findOne({ username });
+		if (!user) {
+			return res.status(404).json({ error: 'Пользователь не найден.' });
+		}
+
+		const posts = await Post.find({ postedBy: user._id }).sort({
+			createdAt: -1,
+		});
+
+		res.status(200).json(posts);
+	} catch (error) {
+		res.status(500).json({ error: error.message });
 	}
 };
 
@@ -159,6 +181,7 @@ export {
 	deletePost,
 	getFeedPosts,
 	getPost,
+	getUserPosts,
 	likeUnlikePost,
 	replyToPost,
 };

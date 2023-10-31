@@ -4,7 +4,6 @@ import { Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/menu';
 import { Portal } from '@chakra-ui/portal';
 import { Button, useToast } from '@chakra-ui/react';
 import { useState } from 'react';
-import { BsInstagram } from 'react-icons/bs';
 import { CgMoreO } from 'react-icons/cg';
 import { Link as RouterLink } from 'react-router-dom';
 import { useRecoilValue } from 'recoil';
@@ -14,19 +13,19 @@ import useShowToast from '../hooks/useShowToast';
 const UserHeader = ({ user }) => {
 	const toast = useToast();
 	const currentUser = useRecoilValue(userAtom);
-	const showToast = useShowToast();
 	const [following, setFollowing] = useState(
-		user.followers.includes(currentUser._id)
+		user.followers.includes(currentUser?._id)
 	);
+	const showToast = useShowToast();
 	const [updating, setUpdating] = useState(false);
 
 	const copyURL = () => {
 		const currentURL = window.location.href;
 		navigator.clipboard.writeText(currentURL).then(() => {
 			toast({
-				title: 'Account created.',
+				title: 'Успешно',
 				status: 'success',
-				description: 'Profile link copied.',
+				description: 'Ссылка на профиль скопирована.',
 				duration: 3000,
 				isClosable: true,
 			});
@@ -35,10 +34,11 @@ const UserHeader = ({ user }) => {
 
 	const handleFollowUnfollow = async () => {
 		if (!currentUser) {
-			showToast('Error', 'Please login to follow', 'error');
+			showToast('Ошибка', 'Авторизуйтесь чтобы подписаться.', 'error');
 			return;
 		}
 		if (updating) return;
+
 		setUpdating(true);
 		try {
 			const res = await fetch(`/api/users/follow/${user._id}`, {
@@ -49,22 +49,22 @@ const UserHeader = ({ user }) => {
 			});
 			const data = await res.json();
 			if (data.error) {
-				showToast('Error', data.error, 'error');
+				showToast('Ошибка', data.error, 'error');
 				return;
 			}
 
 			if (following) {
-				showToast('Success', `Unfollowed ${user.name}`, 'success');
+				showToast('Успешно', `Отписались от ${user.name}`, 'success');
 				user.followers.pop();
 			} else {
-				showToast('Success', `Followed ${user.name}`, 'success');
-				user.followers.push(currentUser._id);
+				showToast('Успешно', `Подписались на ${user.name}`, 'success');
+				user.followers.push(currentUser?._id);
 			}
 			setFollowing(!following);
 
 			console.log(data);
 		} catch (error) {
-			showToast('Error', error, 'error');
+			showToast('Ошибка', error, 'error');
 		} finally {
 			setUpdating(false);
 		}
@@ -79,15 +79,6 @@ const UserHeader = ({ user }) => {
 					</Text>
 					<Flex gap={2} alignItems={'center'}>
 						<Text fontSize={'sm'}>{user.username}</Text>
-						<Text
-							fontSize={'xs'}
-							bg={'gray.dark'}
-							color={'gray.light'}
-							p={1}
-							borderRadius={'full'}
-						>
-							threads.net
-						</Text>
 					</Flex>
 				</Box>
 				<Box>
@@ -116,26 +107,21 @@ const UserHeader = ({ user }) => {
 
 			<Text>{user.bio}</Text>
 
-			{currentUser._id === user._id && (
+			{currentUser?._id === user._id && (
 				<Link as={RouterLink} to='/update'>
-					<Button size={'sm'}>Update Profile</Button>
+					<Button size={'sm'}>Редактировать профиль</Button>
 				</Link>
 			)}
-			{currentUser._id !== user._id && (
+			{currentUser?._id !== user._id && (
 				<Button size={'sm'} onClick={handleFollowUnfollow} isLoading={updating}>
 					{following ? 'Unfollow' : 'Follow'}
 				</Button>
 			)}
 			<Flex w={'full'} justifyContent={'space-between'}>
 				<Flex gap={2} alignItems={'center'}>
-					<Text color={'gray.light'}>{user.followers.length} followers</Text>
-					<Box w='1' h='1' bg={'gray.light'} borderRadius={'full'}></Box>
-					<Link color={'gray.light'}>instagram.com</Link>
+					<Text color={'gray.light'}>{user.followers.length} подписчиков</Text>
 				</Flex>
 				<Flex>
-					<Box className='icon-container'>
-						<BsInstagram size={24} cursor={'pointer'} />
-					</Box>
 					<Box className='icon-container'>
 						<Menu>
 							<MenuButton>
@@ -144,7 +130,7 @@ const UserHeader = ({ user }) => {
 							<Portal>
 								<MenuList bg={'gray.dark'}>
 									<MenuItem bg={'gray.dark'} onClick={copyURL}>
-										Copy link
+										Копировать ссылку
 									</MenuItem>
 								</MenuList>
 							</Portal>
@@ -161,7 +147,7 @@ const UserHeader = ({ user }) => {
 					pb='3'
 					cursor={'pointer'}
 				>
-					<Text fontWeight={'bold'}>Threads</Text>
+					<Text fontWeight={'bold'}> Записи</Text>
 				</Flex>
 				<Flex
 					flex={1}
@@ -171,7 +157,7 @@ const UserHeader = ({ user }) => {
 					pb='3'
 					cursor={'pointer'}
 				>
-					<Text fontWeight={'bold'}>Replies</Text>
+					<Text fontWeight={'bold'}> Комментарии</Text>
 				</Flex>
 			</Flex>
 		</VStack>

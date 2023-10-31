@@ -1,18 +1,21 @@
 import { Avatar } from '@chakra-ui/avatar';
+import { DeleteIcon } from '@chakra-ui/icons';
 import { Image } from '@chakra-ui/image';
 import { Box, Flex, Text } from '@chakra-ui/layout';
+import { formatDistanceToNow } from 'date-fns';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useRecoilState, useRecoilValue } from 'recoil';
+import postsAtom from '../atoms/postsAtom';
+import userAtom from '../atoms/userAtom';
 import useShowToast from '../hooks/useShowToast';
 import Actions from './Actions';
 
-import { formatDistanceToNow } from 'date-fns';
-
 const Post = ({ post, postedBy }) => {
-	const [liked, setLiked] = useState(false);
 	const [user, setUser] = useState(null);
 	const showToast = useShowToast();
-
+	const currentUser = useRecoilValue(userAtom);
+	const [posts, setPosts] = useRecoilState(postsAtom);
 	const navigate = useNavigate();
 
 	useEffect(() => {
@@ -20,20 +23,39 @@ const Post = ({ post, postedBy }) => {
 			try {
 				const res = await fetch('/api/users/profile/' + postedBy);
 				const data = await res.json();
-				console.log(data);
 				if (data.error) {
-					showToast('Error', data.error, 'error');
+					showToast('Ошибка', data.error, 'error');
 					return;
 				}
 				setUser(data);
 			} catch (error) {
-				showToast('Error', error.message, 'error');
+				showToast('Ошибка', error.message, 'error');
 				setUser(null);
 			}
 		};
 
 		getUser();
 	}, [postedBy, showToast]);
+
+	const handleDeletePost = async e => {
+		try {
+			e.preventDefault();
+			if (!window.confirm('Вы действительно хотите удалить запись?')) return;
+
+			const res = await fetch(`/api/posts/${post._id}`, {
+				method: 'DELETE',
+			});
+			const data = await res.json();
+			if (data.error) {
+				showToast('Ошибка', data.error, 'error');
+				return;
+			}
+			showToast('Успешно', 'Запись удалена.', 'success');
+			setPosts(posts.filter(p => p._id !== post._id));
+		} catch (error) {
+			showToast('Ошибка', error.message, 'error');
+		}
+	};
 
 	if (!user) return null;
 	return (
@@ -42,7 +64,7 @@ const Post = ({ post, postedBy }) => {
 				<Flex flexDirection={'column'} alignItems={'center'}>
 					<Avatar
 						size='md'
-						name={user?.name}
+						name={user.name}
 						src={user?.profilePic}
 						onClick={e => {
 							e.preventDefault();
@@ -70,8 +92,8 @@ const Post = ({ post, postedBy }) => {
 								name='John doe'
 								src={post.replies[1].userProfilePic}
 								position={'absolute'}
-								top={'0px'}
-								left='15px'
+								bottom={'0px'}
+								right='-5px'
 								padding={'2px'}
 							/>
 						)}
@@ -80,10 +102,10 @@ const Post = ({ post, postedBy }) => {
 							<Avatar
 								size='xs'
 								name='John doe'
-								src={post.replies[1].userProfilePic}
+								src={post.replies[2].userProfilePic}
 								position={'absolute'}
-								top={'0px'}
-								left='15px'
+								bottom={'0px'}
+								left='4px'
 								padding={'2px'}
 							/>
 						)}
@@ -113,6 +135,10 @@ const Post = ({ post, postedBy }) => {
 							>
 								{formatDistanceToNow(new Date(post.createdAt))} ago
 							</Text>
+
+							{currentUser?._id === user._id && (
+								<DeleteIcon size={20} onClick={handleDeletePost} />
+							)}
 						</Flex>
 					</Flex>
 
@@ -121,7 +147,7 @@ const Post = ({ post, postedBy }) => {
 						<Box
 							borderRadius={6}
 							overflow={'hidden'}
-							border={'1px solid '}
+							border={'1px solid'}
 							borderColor={'gray.light'}
 						>
 							<Image src={post.img} w={'full'} />
@@ -129,17 +155,7 @@ const Post = ({ post, postedBy }) => {
 					)}
 
 					<Flex gap={3} my={1}>
-						<Actions liked={liked} setLiked={setLiked} />
-					</Flex>
-
-					<Flex gap={2} alignItems={'center'}>
-						<Text color={'gray.light'} fontSize='sm'>
-							{post.replies.length} replies
-						</Text>
-						<Box w={0.5} h={0.5} borderRadius={'full'} bg={'gray.light'}></Box>
-						<Text color={'gray.light'} fontSize='sm'>
-							{post.likes.length} likes
-						</Text>
+						<Actions post={post} />
 					</Flex>
 				</Flex>
 			</Flex>
